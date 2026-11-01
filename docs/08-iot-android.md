@@ -1,52 +1,60 @@
-# 08 · ThingSpeak and Android application
+# 08 — ThingSpeak monitoring and our Android application
 
-[← Home](../README.md) · [← Firmware](07-firmware.md) · [Results →](09-results.md)
+[← Home](../README.md) · [← Firmware](07-firmware.md) · [Next: Results →](09-results.md)
 
-## Data journey
+We wanted the information from the prototype to be accessible beyond the LCD. Our IoMT layer therefore combined **ThingSpeak** for cloud-side storage and visualization with an Android interface we built in **MIT App Inventor**.
+
+## End-to-end cloud workflow
 
 ```mermaid
 sequenceDiagram
-participant Radar as MR60BHA1
-participant MCU as ESP8266
-participant Cloud as ThingSpeak
-participant App as CVSMS Android app
-Radar->>MCU: Heart-rate / breath-rate reports
-MCU->>MCU: Read thermistor and update LCD
-MCU->>Cloud: HTTP POST field1, field2, field3
-App->>Cloud: Read latest channel values
-Cloud-->>App: Stored measurement values
+    participant R as MR60BHA1 radar
+    participant E as ESP8266
+    participant T as ThingSpeak
+    participant A as CVSMS Android app
+    R->>E: Heart-rate / respiratory-rate reports
+    E->>E: Read thermistor and update LCD
+    E->>T: Upload fields 1, 2 and 3
+    A->>T: Request channel readings
+    T-->>A: Data for mobile display
 ```
 
-## ThingSpeak mapping
-- `field1`: radar-reported heart rate, beats/min
-- `field2`: radar-reported respiratory rate, breaths/min
-- `field3`: AMG88xx **thermistor** reading, degrees Celsius
+### ThingSpeak channel mapping
 
-The book describes remote data access through ThingSpeak and an Android application built in **MIT App Inventor**. MIT App Inventor is a visual, block-based Android development platform; it is **not** an OpenAI product.
+| Field | Meaning | Source |
+|---|---|---|
+| `field1` | Heart rate (bpm) | MR60BHA1 report |
+| `field2` | Respiratory rate (breaths/min) | MR60BHA1 report |
+| `field3` | Temperature-related reading (°C) | AMG88xx thermistor |
 
-## Android screen concept
-A useful project page or dashboard would show current HR, RR, temperature, connection status and timestamp, with historical graphs where supported. **This is a suggested presentation**, not an assertion that the unrecovered original app had these exact screen elements.
+The ESP8266 sends data over Wi-Fi using an HTTP request. ThingSpeak provides the cloud channel used for the graphs and values displayed in our monitoring demonstration.
 
-## Original application artifacts
-The `.aia` App Inventor source export, `.apk`, block screenshots and original phone screenshots **are not included**. They must be recovered from the original team archive to show authentic app screens or distribute a runnable application. See [`app/README.md`](../app/README.md).
+![ThingSpeak channel interface](../assets/project-images/05-iot-and-android/thingspeak-dashboard.png)
 
-## Privacy and access
-Avoid embedding private ThingSpeak write keys in an Android client or public repository. Distinguish read and write permissions. Do not publicly expose identifiable participant measurements.
+*The ThingSpeak monitoring screenshots documented in our capstone (Fig. 3.2.4).*
 
+## Building the CVSMS Android interface
 
-## Original project figures
+We used MIT App Inventor because its visual designer and block programming model made it possible to assemble a dedicated monitoring interface around our ThingSpeak channel. Our app presented the available measurements through screens for the project demonstration.
 
-These images were supplied from the capstone materials and are presented as project documentation, not independently reproduced measurements.
+![CVSMS Android application](../assets/project-images/05-iot-and-android/android-app-screen.png)
 
-### CVSMS Android app interface (capstone Fig. 3.2.3)
+*The CVSMS Android interface in our capstone (Fig. 3.2.3).*
 
-![CVSMS Android app interface (capstone Fig. 3.2.3)](../assets/project-images/05-iot-and-android/android-app-screen.png)
+The screenshot shows the screens and controls we developed for navigating the measurements. It is a record of the original app, not a simulated replacement interface.
 
-### ThingSpeak cloud interface (capstone Fig. 3.2.4)
+## Visual application programming
 
-![ThingSpeak cloud interface (capstone Fig. 3.2.4)](../assets/project-images/05-iot-and-android/thingspeak-dashboard.png)
+![MIT App Inventor program blocks](../assets/project-images/05-iot-and-android/app-inventor-blocks.png)
 
-### MIT App Inventor visual programming blocks
+*The block-based application logic from our project materials.*
 
-![MIT App Inventor visual programming blocks](../assets/project-images/05-iot-and-android/app-inventor-blocks.png)
+Our workflow connected the cloud response to the application's visual components. We treated the Android application as the presentation layer: it **displays** the readings made available through the radar/ESP8266/ThingSpeak system rather than performing the radar's vital-sign analysis itself.
 
+## Scope of the app archive
+
+I have preserved the screenshots available from our project. The original editable MIT App Inventor `.aia` project and compiled `.apk` are **not included**, so a visitor can study the design and blocks but cannot rebuild the exact Android app from source files provided here.
+
+For future development I would use authenticated, read-only cloud access from the app, encrypted network transport, meaningful connection states and error messages, and stricter rules for handling any personal health-related data.
+
+[Next: Results and analysis →](09-results.md)

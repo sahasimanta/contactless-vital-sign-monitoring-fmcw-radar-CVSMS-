@@ -1,78 +1,85 @@
-# 04 · Circuit explanation, wiring and power
+# 04 — Circuit design, components, wiring and enclosure
 
-[← Home](../README.md) · [← Architecture](03-system-architecture.md) · [Radar theory →](05-fmcw-radar-theory.md)
+[← Home](../README.md) · [← Architecture](03-system-architecture.md) · [Next: Radar theory →](05-fmcw-radar-theory.md)
 
-## Circuit connections recorded in the book
-The following table transcribes the **logical connections** in the capstone's **Table 4.3.2 (p. 48)**. It is not a verified production wiring schematic.
+This is the part of our project where the sensing concept became a physical electronic system. We combined the radar, controller, thermal sensor, display and power supply inside a portable enclosure. The wiring table below follows **Table 4.3.2, page 48 of our capstone book**.
 
-| ESP8266 NodeMCU | Connected device | Device pin | Explanation |
+## 1. Component overview
+
+| Component | Why we included it |
+|---|---|
+| **MR60BHA1 60 GHz radar** | Non-contact heart-rate and respiratory-rate reports |
+| **ESP8266 NodeMCU** | Main integration controller with UART, I²C and Wi-Fi |
+| **AMG8833 / AMG88xx** | Additional thermal-sensor module; firmware reads thermistor |
+| **I²C LCD** | Displays current readings without needing the phone |
+| **Li-ion battery, charger and converter** | Prototype's portable power subsystem |
+| **3D-modeled enclosure** | Holds the hardware, protects connections and positions the display and sensor |
+
+### Radar and MCU
+
+![MR60BHA1 radar module](../assets/project-images/03-hardware-and-circuit/mr60bha1-module.png)
+
+*60 GHz radar module referenced in our build.*
+
+![ESP8266 NodeMCU and pins](../assets/project-images/03-hardware-and-circuit/esp8266-nodemcu.png)
+
+*NodeMCU board and pin-reference illustration.*
+
+## 2. Pin-level connections
+
+| NodeMCU pin | Connected device | Peripheral pin | Purpose |
 |---|---|---|---|
-| `Vin` | MR60BHA1 radar | `VCC` | Radar module supply; **verify required voltage/current and board regulator** |
-| `G` | MR60BHA1 radar | `GND` | Common electrical reference |
-| `Rx` | MR60BHA1 radar | `Tx` | Radar reports enter the ESP8266 UART receiver |
-| `Tx` | MR60BHA1 radar | `Rx` | ESP8266 transmits to the radar's UART receiver |
-| `3.3V` | AMG88xx | `Vin` | Sensor power, only if breakout supports this supply |
-| `G` | AMG88xx | `GND` | Common ground |
-| `D1` | AMG88xx | `SCL` | I²C clock |
-| `D2` | AMG88xx | `SDA` | I²C data |
-| `G` | LCD module | `GND` | Common ground |
-| `Vin` | LCD module | `VCC` | LCD supply; verify module voltage and I²C pull-up levels |
+| `Vin` | Radar | `VCC` | Radar power (confirm required module supply voltage) |
+| `GND` | Radar | `GND` | Common electrical ground |
+| `RX` | Radar | `TX` | Receive radar UART reports |
+| `TX` | Radar | `RX` | UART transmit path to radar |
+| `3.3V` | AMG88xx | `VIN` | Sensor supply, subject to breakout requirements |
+| `GND` | AMG88xx | `GND` | Common ground |
+| `D1` | AMG88xx | `SCL` | Shared I²C clock |
+| `D2` | AMG88xx | `SDA` | Shared I²C data |
+| `Vin` | LCD module | `VCC` | LCD power (check backpack rating) |
+| `GND` | LCD module | `GND` | Common ground |
 | `D1` | LCD module | `SCL` | Shared I²C clock |
 | `D2` | LCD module | `SDA` | Shared I²C data |
 
-## Logical circuit
+**UART TX and RX cross:** radar TX goes to NodeMCU RX, and radar RX goes to NodeMCU TX. We connected all modules to a common ground.
 
-```mermaid
-flowchart LR
-RAD[MR60BHA1
-Tx / Rx] <-->|UART crossed Tx/Rx| MCU[ESP8266
-NodeMCU]
-AMG[AMG88xx
-SDA / SCL] <-->|I2C D2 / D1| MCU
-LCD[20x4 LCD
-I2C backpack] <-->|I2C D2 / D1| MCU
-BAT[Li-ion cell] --> CH[TP4056 charger + boost / regulator]
-CH --> MCU
-```
+**I²C shares two wires:** the temperature module and LCD both use `D2` for SDA and `D1` for SCL. The devices must have separate addresses. The appendix code specifies LCD address `0x3F`; some aftermarket LCD backpacks use `0x27` instead.
 
-### Why the UART lines cross
-The transmitting pin of one device connects to the receiving pin of the other. **Important:** The original firmware uses `Serial` both for the radar interface and for debug prints. That can corrupt communication or cause ambiguous wiring on a single-UART ESP8266. The firmware is preserved as a reconstruction, **not a verified safe wiring design**. A revised build should assign an appropriate dedicated UART/serial strategy and confirm the radar's electrical logic levels.
+> **Electrical check before building:** ESP8266 GPIO operates at 3.3 V. An LCD backpack powered from 5 V may pull its I²C lines above safe logic levels; check pull-ups or use an appropriate level shifter. Verify radar supply and UART logic compatibility rather than assuming the schematic's `Vin` labels guarantee safe operation.
 
-### Why I²C can be shared
-The thermal sensor and LCD use the same SDA and SCL buses but have distinct addresses. The appendix initializes the LCD at `0x3F`; some LCD backpacks use `0x27`. Confirm with an I²C scan. The ESP8266's I²C lines are **3.3 V logic**; check LCD pull-up resistors and use level shifting when required.
+## 3. Original circuit diagram
 
-### Power architecture
-The capstone describes a lithium-ion battery, a TP4056-based charger and boost conversion. These parts require correct cell protection, charging current, wiring polarity and output regulation. **Do not connect raw battery or unverified boosted voltage directly to 3.3 V GPIO.** Use the individual module datasheets to verify power compatibility.
+![CVSMS wiring schematic](../assets/project-images/03-hardware-and-circuit/original-circuit-diagram.png)
 
-### Circuit diagram status
-This is a **faithful connection-table-based diagram**, not an extracted photograph or CAD schematic. The original book's figure and enclosure photographs are not bundled here because the underlying PDF image assets have not yet been recovered and verified. Add them later under `assets/original-figures/` with captions and figure provenance.
+*Circuit layout included in our project book (Fig. 5.2.1.2). The drawing illustrates the system connections; the pin table above explains the signal paths.*
 
+## 4. Power system
 
-## Original project figures
+We developed a portable arrangement using a lithium-ion battery, a charging stage based on **TP4056**, and voltage conversion circuitry. The MCU and peripherals require suitable regulated power rails. Battery protection, charging supervision and correct polarity are particularly important when reproducing a prototype.
 
-These images were supplied from the capstone materials and are presented as project documentation, not independently reproduced measurements.
+The book also refers to an external adapter in the implementation discussion. I would verify the exact power routing against the actual assembled unit before producing a manufacturing-grade electrical schematic.
 
-### Prototype wiring diagram (capstone Fig. 5.2.1.2)
+## 5. Enclosure design and hardware assembly
 
-![Prototype wiring diagram (capstone Fig. 5.2.1.2)](../assets/project-images/03-hardware-and-circuit/original-circuit-diagram.png)
+We planned the enclosure in 3D before assembling the hardware. The book describes a housing approximately **7.5 × 4.5 × 3.5 inches**, with openings for the display, thermal sensor and a switch. The design also provides internal space for the radar, battery and controller.
 
-### Annotated hardware assembly (capstone Fig. 4.3.2.2)
+**Our 3D enclosure views — Figs. 3.3.1 and 3.3.2**
 
-![Annotated hardware assembly (capstone Fig. 4.3.2.2)](../assets/project-images/03-hardware-and-circuit/prototype-internal.png)
+![Enclosure model, view one](../assets/project-images/03-hardware-and-circuit/enclosure-view-1.png)
 
-### Enclosure CAD view 1 (capstone Fig. 3.3.1)
+![Enclosure model, view two](../assets/project-images/03-hardware-and-circuit/enclosure-view-2.png)
 
-![Enclosure CAD view 1 (capstone Fig. 3.3.1)](../assets/project-images/03-hardware-and-circuit/enclosure-view-1.png)
+**Assembled prototype — Fig. 4.3.2.2**
 
-### Enclosure CAD view 2 (capstone Fig. 3.3.2)
+![Prototype internal wiring](../assets/project-images/03-hardware-and-circuit/prototype-internal.png)
 
-![Enclosure CAD view 2 (capstone Fig. 3.3.2)](../assets/project-images/03-hardware-and-circuit/enclosure-view-2.png)
+We designed the device so the radar could be directed toward the chest. Target alignment matters because breathing and heartbeat create only small displacements, and large movement or poor positioning can affect the reported rates.
 
-### 60 GHz radar module (capstone Fig. 4.2.1)
+## 6. Notes from our implementation
 
-![60 GHz radar module (capstone Fig. 4.2.1)](../assets/project-images/03-hardware-and-circuit/mr60bha1-module.png)
+- The hardware presented here demonstrates one-person monitoring; it does not separate overlapping vital-sign signals from multiple individuals.
+- The original program uses the ESP8266 `Serial` interface for the radar, and the same serial port was also used for debug output in the printed appendix. That needs care during reproduction.
+- The display size, I²C address, supply rails, radar wiring and sensor version must be checked against the physical devices rather than inferred only from a screenshot.
 
-### ESP8266 NodeMCU and pin reference (capstone Fig. 4.2.2)
-
-![ESP8266 NodeMCU and pin reference (capstone Fig. 4.2.2)](../assets/project-images/03-hardware-and-circuit/esp8266-nodemcu.png)
-
+[Next: FMCW radar theory →](05-fmcw-radar-theory.md)

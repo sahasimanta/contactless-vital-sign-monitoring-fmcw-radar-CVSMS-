@@ -1,5 +1,7 @@
-% Reconstructed from Appendix Z, pp. 73-75, AIUB capstone, June 2024.
-% Original research team code. Formatting normalized; algorithm retained.
+% CVSMS capstone team: FMCW proof-of-concept MATLAB simulation.
+% Transcribed from our AIUB capstone book, Appendix Z, pp. 73-75 (June 2024).
+% Only formatting was normalized; the reported algorithm and parameters remain.
+% The simulation is separate from the MR60BHA1 onboard vital-sign processing.
 maxR = 200; rangeRes = 1; maxV = 70;
 fc = 60e9; c = 3e8; r0 = 100; v0 = 70;
 B = c/(2*rangeRes);

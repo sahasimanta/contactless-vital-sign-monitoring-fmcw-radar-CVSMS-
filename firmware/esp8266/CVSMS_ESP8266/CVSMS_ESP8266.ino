@@ -1,5 +1,6 @@
-// Wi-Fi password and ThingSpeak write key have been removed.
-// Original team implementation, with credential handling and HTTP framing improved.
+// CVSMS team project, ESP8266 firmware reconstructed from capstone Appendix Z.
+// Network credentials are loaded from a local untracked secrets.h file.
+// HTTP framing and ThingSpeak upload timing have been adjusted.
 // Hardware required: ESP8266 NodeMCU, MR60BHA1, AMG88xx, 20x4 I2C LCD.
 #include <Arduino.h>
 #include <Wire.h>

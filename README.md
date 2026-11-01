@@ -1,121 +1,125 @@
-# CVSMS | Contactless Human Vital Sign Monitoring System
+# Contactless Human Vital Sign Monitoring Using 60 GHz FMCW Radar
 
-**60 GHz FMCW Radar · Embedded Systems · Biomedical Sensing · Internet of Medical Things · MATLAB**
+**CVSMS — My undergraduate capstone project at American International University–Bangladesh (AIUB)**
 
-**Simanta Saha — Capstone Team Lead & Repository Maintainer**  
-American International University–Bangladesh (AIUB) | Spring 2023–2024
+**Simanta Saha** · Capstone Team Lead · Electrical & Electronic Engineering  
+*Radar sensing · Signal processing · Embedded systems · Internet of Medical Things*
 
-[![Paper](https://img.shields.io/badge/IEEE-BECITHCON_2024-blue)](https://doi.org/10.1109/BECITHCON64160.2024.10962775) ![Research prototype](https://img.shields.io/badge/status-research_prototype-orange) ![Documentation](https://img.shields.io/badge/docs-project_walkthrough-green)
+[![Research paper](https://img.shields.io/badge/IEEE-BECITHCON%202024-0969da)](https://doi.org/10.1109/BECITHCON64160.2024.10962775) ![60 GHz](https://img.shields.io/badge/Radar-60%20GHz-394f83) ![Prototype](https://img.shields.io/badge/Type-Research%20prototype-9f6a2b)
 
-> **Start here:** This repository presents our collaborative undergraduate capstone as an engineering project rather than a thesis manuscript. I led the capstone team and organized this technical archive. All team members are acknowledged. Original appendix code is separated from subsequent educational demonstrations.
+![CVSMS prototype and Android dashboard](assets/project-images/01-project-overview/project-prototype-front.png)
 
+*Our assembled CVSMS prototype alongside the Android monitoring interface.*
 
+## About the project
 
-## Built prototype and research poster
+During my final-year undergraduate studies at AIUB, I led a four-member team in developing **CVSMS**, a contactless vital-sign monitoring system based on a **60 GHz millimeter-wave radar**. We wanted to explore whether breathing and heartbeat could be monitored without attaching electrodes or probes to a person, while keeping the measurements accessible locally and over the internet.
 
-![CVSMS physical prototype and Android app](assets/project-images/01-project-overview/project-prototype-front.png)
+We integrated the **MR60BHA1 radar**, **ESP8266 NodeMCU**, **AMG88xx thermal sensor**, **I²C LCD**, **ThingSpeak**, and an Android application built with **MIT App Inventor**. We also studied the underlying FMCW principles in MATLAB and compared the prototype's readings with reference measurements.
 
-*The physical CVSMS prototype and Android interface from the original project.*
+The work brought together the areas I enjoy most: electrical engineering, radar, signal analysis, firmware, connected systems, and experimental evaluation.
 
-![CVSMS capstone project poster](assets/project-images/01-project-overview/project-poster.jpg)
+## What we built
 
-*Capstone poster (optimized for web viewing).*
-
-## Project at a glance
-
-| Question | Answer |
+| Subsystem | Our implementation |
 |---|---|
-| What problem? | Monitor breathing and heartbeat without attaching contact sensors to the person |
-| How? | 60 GHz FMCW radar with a Wi-Fi-enabled microcontroller, local display, cloud and Android dashboard |
-| Additional measurement | AMG88xx thermistor-based temperature readout; **not a validated core-body-temperature measurement** |
-| Software | ESP8266 Arduino firmware, MATLAB FMCW proof-of-concept, ThingSpeak, MIT App Inventor |
-| Research status | Academic prototype, not a certified medical device |
+| **Contactless sensing** | MR60BHA1 60 GHz radar provides heart-rate and respiratory-rate reports |
+| **Controller** | ESP8266 NodeMCU reads the radar and thermal sensor, updates the LCD, and transmits readings |
+| **Temperature channel** | AMG88xx thermistor reading; not a clinically validated core-body temperature measurement |
+| **Display** | LCD for immediate readings at the prototype |
+| **Cloud** | ThingSpeak channels for heart rate, breathing rate, and thermistor temperature |
+| **Android app** | CVSMS monitoring interface developed through MIT App Inventor |
+| **MATLAB** | Transmitted and received chirps, IF/beat signal, FFT, and spectrogram simulation |
+| **Evaluation** | Comparative heart-rate and respiratory-rate measurements across younger and older volunteers |
 
-## Explore the project — click a section
-
-| Section | What opens |
-|---|---|
-| **[01 · Problem & objectives](docs/01-problem-and-objectives.md)** | Clinical motivation, requirements, limitations |
-| **[02 · Methodology](docs/02-methodology.md)** | Research workflow, prototype build and experimental approach |
-| **[03 · Architecture](docs/03-system-architecture.md)** | End-to-end data flow, module responsibilities |
-| **[04 · Circuit & wiring](docs/04-circuit-and-wiring.md)** | Pin-by-pin connections, power domains, electrical checks |
-| **[05 · FMCW radar theory](docs/05-fmcw-radar-theory.md)** | Chirps, beat frequency, phase displacement, HR/RR principles |
-| **[06 · MATLAB analysis](docs/06-matlab-analysis.md)** | Original script, modernized demonstration, plots, equations |
-| **[07 · ESP8266 firmware](docs/07-firmware.md)** | Arduino code walkthrough, serial reports, Wi-Fi and upload |
-| **[08 · IoT & Android app](docs/08-iot-android.md)** | ThingSpeak field mapping and MIT App Inventor application |
-| **[09 · Experiments & results](docs/09-results.md)** | Testing, reported metrics, interpretation and limitations |
-| **[10 · Build & reproduce](docs/10-reproduction.md)** | MATLAB, Python, Arduino and hardware checklist |
-| **[11 · Team, awards & publication](docs/11-team-and-publication.md)** | Attribution, research output and recognition |
-| **[12 · Source provenance](docs/12-source-provenance.md)** | Which materials are original, adapted, or illustrative |
-
-## End-to-end system
+### End-to-end architecture
 
 ```mermaid
 flowchart LR
-    H[Person's chest motion] --> R[MR60BHA1 60 GHz radar]
-    R -->|UART reports| M[ESP8266 NodeMCU]
-    T[AMG88xx thermistor] -->|I2C| M
-    M -->|I2C| L[Local LCD]
-    M -->|Wi-Fi HTTP| C[ThingSpeak cloud]
-    C --> A[CVSMS Android dashboard]
-    P[Battery / regulated power] --> M
+    Human[Human chest motion] --> Radar[MR60BHA1 60 GHz radar]
+    Radar -->|UART reports| MCU[ESP8266 NodeMCU]
+    Temp[AMG88xx thermistor] -->|I2C| MCU
+    MCU -->|I2C| LCD[Local LCD]
+    MCU -->|Wi-Fi / HTTP| Cloud[ThingSpeak]
+    Cloud --> App[CVSMS Android app]
 ```
 
-The **MR60BHA1 module generates vital-sign reports internally**. Our MATLAB code is a separate FMCW radar **proof-of-concept**, not the algorithm running inside the radar module.
+The **MR60BHA1 generates vital-sign reports internally**. Our MATLAB simulation is a separate analysis of FMCW waveforms—not the algorithm running inside the module. This distinction is important when interpreting the code and results.
 
-## Repository map
+## Explore my project
 
-```text
-CVSMS_GitHub_Complete_Project/
-├── README.md                       ← GitHub landing page
-├── docs/                           ← Clickable engineering project chapters
-├── matlab/
-│   ├── fmcw_original_from_capstone.m
-│   └── fmcw_corrected_demo.m
-├── firmware/esp8266/
-│   ├── CVSMS_ESP8266.ino
-│   └── secrets.example.h
-├── src/demo.py                     ← Synthetic Python illustration
-├── tests/test_demo.py
-├── assets/project-images/           ← Original photos, plots, screenshots to add
-├── IMAGE_GUIDE_START_HERE.md
-├── IMAGE_PLACEMENT_CHECKLIST.csv
-├── figures/synthetic_demo.png
-├── app/README.md                   ← MIT App Inventor archive status
-└── original-source/README.md       ← Original assets inventory
-```
+I have arranged the work in the same order as our engineering process, from the research problem through circuit design, programming, testing, and publication. Each chapter includes explanations and the original figures where available.
 
-## Reported project outcomes
+| Chapter | What I cover |
+|---|---|
+| **01** | [Why we chose this problem and what we set out to achieve](docs/01-problem-and-objectives.md) |
+| **02** | [Our research methodology and development stages](docs/02-methodology.md) |
+| **03** | [System architecture and the route taken by each measurement](docs/03-system-architecture.md) |
+| **04** | [Circuit diagram, pin connections, power and enclosure](docs/04-circuit-and-wiring.md) |
+| **05** | [FMCW radar theory: chirps, reflections, range and chest motion](docs/05-fmcw-radar-theory.md) |
+| **06** | [MATLAB simulation, equations, source code and results](docs/06-matlab-analysis.md) |
+| **07** | [ESP8266/Arduino firmware and data acquisition](docs/07-firmware.md) |
+| **08** | [ThingSpeak cloud dashboard and MIT App Inventor application](docs/08-iot-android.md) |
+| **09** | [Our experiments, result graphs and error calculations](docs/09-results.md) |
+| **10** | [How to run the code and understand the hardware setup](docs/10-reproduction.md) |
+| **11** | [Team, supervisors, awards and IEEE publication](docs/11-team-and-publication.md) |
+| **12** | [Original files, later examples and source attribution](docs/12-source-provenance.md) |
+| **13** | [Engineering choices, cost considerations and project planning](docs/13-design-decisions-and-management.md) |
+| **14** | [Limitations, what I learned and where I would take the work next](docs/14-limitations-and-next-steps.md) |
 
-The reported study involved **18 participants and 90 samples**. The following figures are presented as **100 − MAPE (%)**, not clinical sensitivity, specificity, or diagnostic accuracy:
+[**Browse the project figure index**](docs/FIGURE_INDEX.md) for the original figure numbers and corresponding files.
+
+## Our experimental results
+
+In our capstone study, we recorded **90 measurements from 18 volunteers**. The heart-rate and respiratory-rate comparison scores reported in our project were:
 
 | Age group | Heart-rate score | Respiratory-rate score |
 |---|---:|---:|
-| 22–25 years | 92.11% | 89.88% |
-| 45–79 years | 96.05% | 93.73% |
+| **22–25 years** | **92.11%** | **89.88%** |
+| **45–79 years** | **96.05%** | **93.73%** |
 
-[Read the results and limitations →](docs/09-results.md)
+These scores are expressed as **100 − mean absolute percentage error (MAPE)**. They describe agreement in the measurements we reported; they are **not clinical diagnostic accuracy, sensitivity, or specificity**. See the [experimental results](docs/09-results.md) for the original comparison graphs and limitations.
 
-## Recognition and publication
+<p align="center">
+  <img src="assets/project-images/06-experiments-and-results/heart-rate-young.png" width="47%" alt="Heart-rate comparison, younger participants" />
+  <img src="assets/project-images/06-experiments-and-results/respiration-young.png" width="47%" alt="Respiratory-rate comparison, younger participants" />
+</p>
 
-- Dean's Award for Best Capstone Project — AIUB
-- Vice Chancellor's Award — AIUB, 23rd Convocation
-- Research grant: reported by project lead; awarding body and grant reference pending verification
-- [IEEE BECITHCON 2024 paper](https://doi.org/10.1109/BECITHCON64160.2024.10962775)
+## Code and engineering files
 
-## Team and supervisors
+| File | What it demonstrates |
+|---|---|
+| [`matlab/fmcw_original_from_capstone.m`](matlab/fmcw_original_from_capstone.m) | MATLAB FMCW simulation transcribed from Appendix Z of our capstone book |
+| [`matlab/fmcw_corrected_demo.m`](matlab/fmcw_corrected_demo.m) | Separate synthetic baseband range-FFT demonstration |
+| [`firmware/esp8266/CVSMS_ESP8266/CVSMS_ESP8266.ino`](firmware/esp8266/CVSMS_ESP8266/CVSMS_ESP8266.ino) | Reconstructed ESP8266 program for radar reports, LCD, thermistor and ThingSpeak |
+| [`src/demo.py`](src/demo.py) | Separate Python illustration of synthetic breathing and heartbeat signals |
+| [`assets/project-images/`](assets/project-images/) | Prototype images, schematics, simulation plots, application and experiment figures |
 
-**Simanta Saha** (team lead), **Nazmus Sakib Nihal**, **Md. Shakil Ahamed Sagor**, and **Shilamoni Shaha Neir**. Supervisor: **Dr. Mohammad Hasan Imam**. External supervisor: **Dr. Md. Humayun Kabir**. See [full credits](docs/11-team-and-publication.md).
+The firmware is reconstructed from the code printed in our book, with configuration credentials removed and network formatting adjusted. The synthetic MATLAB and Python examples were prepared separately from our experimental data. I have kept them clearly distinguished from the original capstone materials.
 
-## Quick start
+## Publication and recognition
 
-- MATLAB: open `matlab/fmcw_corrected_demo.m` and run it to generate a **synthetic** FMCW range plot.
-- ESP8266: read [firmware setup](docs/07-firmware.md); configure a local `secrets.h` based on the template; connect compatible hardware before compiling.
-- Python demo: `pip install -r requirements.txt` then `python -m src.demo`.
+Our capstone received the **Dean's Award for Best Capstone Project at AIUB**, and I received the **Vice Chancellor's Award** at AIUB's 23rd Convocation.
 
-**Safety and provenance:** Historical passwords and API keys from the capstone book are intentionally not distributed. No participant-identifiable data, proprietary publisher PDF, original app project export, or unavailable original photographs are represented as included. [Source status →](docs/12-source-provenance.md)
+Our related paper was presented at **IEEE BECITHCON 2024**:
 
+**Md. Sayzar Rahman Akash, Simanta Saha, Md. Shakil Ahamed Sagor, Nazmus Sakib Nihal, Shilamoni Shaha Neir, and Mohammad Hasan Imam.** “Contactless Human Vital Sign Monitoring System Using Millimeter Wave FMCW Radar for Healthcare Applications.” *IEEE BECITHCON 2024*, pp. 137–142. [Read the paper / DOI](https://doi.org/10.1109/BECITHCON64160.2024.10962775).
 
-## Original project image gallery
+![Our project poster](assets/project-images/01-project-overview/project-poster.jpg)
 
-All technical figures are integrated into the linked documentation chapters above. [Start with the methodology and system block diagram](docs/02-methodology.md), [inspect the circuit](docs/04-circuit-and-wiring.md), or [review the measured comparisons](docs/09-results.md).
+## The people behind CVSMS
+
+I led this capstone alongside **Nazmus Sakib Nihal**, **Md. Shakil Ahamed Sagor**, and **Shilamoni Shaha Neir**. Our supervisor was **Dr. Mohammad Hasan Imam**, and our external supervisor was **Dr. Md. Humayun Kabir**. The design, implementation, measurements, and research output represent our work as a team. I maintain this project under my GitHub profile to present what we accomplished together and the engineering experience I gained while leading it.
+
+## Running the project material
+
+```bash
+# Independent synthetic Python demonstration (not original radar data)
+python -m pip install -r requirements.txt
+python -m src.demo
+python -m pytest -q
+```
+
+For MATLAB, see the [simulation walkthrough](docs/06-matlab-analysis.md). For the ESP8266, see the [firmware chapter](docs/07-firmware.md) and the [hardware setup](docs/10-reproduction.md).
+
+**Technical scope:** CVSMS is an academic prototype, not a certified medical device. The published firmware requires hardware-specific verification before deployment. The MIT App Inventor screenshots are included, but an editable `.aia` export and participant-level raw data are not included. The [source record](docs/12-source-provenance.md) explains these boundaries.

@@ -1,73 +1,97 @@
-# 06 · MATLAB FMCW simulation and analysis
+# 06 — MATLAB simulation and FMCW signal analysis
 
-[← Home](../README.md) · [← Theory](05-fmcw-radar-theory.md) · [Firmware →](07-firmware.md)
+[← Home](../README.md) · [← FMCW theory](05-fmcw-radar-theory.md) · [Next: Firmware →](07-firmware.md)
 
-## Which code should I open?
+I used MATLAB in our capstone to explore how an FMCW radar waveform changes between transmission, reflection and the IF stage. Our simulation helped connect the mathematical expressions to the waveforms and frequency plots shown in the project book.
 
-| File | Origin | Purpose |
-|---|---|---|
-| [`fmcw_original_from_capstone.m`](../matlab/fmcw_original_from_capstone.m) | Appendix Z, book pp. 73–75, transcribed and formatted | Preserve original FMCW simulation logic |
-| [`fmcw_corrected_demo.m`](../matlab/fmcw_corrected_demo.m) | Later educational implementation | Generate a simpler synthetic stationary-target range FFT |
+## 1. Parameters from our original script
 
-## Appendix workflow
+The following values come from **Appendix Z, pages 73–75** of our capstone book:
+
+| Parameter | Original variable | Value |
+|---|---|---:|
+| Carrier frequency | `fc` | 60 GHz |
+| Maximum simulated range | `maxR` | 200 m |
+| Nominal range resolution | `rangeRes` | 1 m |
+| Initial target distance | `r0` | 100 m |
+| Initial target speed | `v0` | 70 m/s |
+| Number of chirps | `Nd` | 128 |
+| Samples per chirp | `Nr` | 1,024 |
+| Idle interval | `endle_time` | 6.3 µs |
+
+The theoretical bandwidth in this setup is $B=c/(2\Delta R)=150$ MHz. The script sets chirp time to $T_c=5.5(2R_{\max}/c)$ and slope to $B/T_c$.
+
+**Why the 200 m parameter is here:** it belongs to our illustrative FMCW simulation scenario. It is **not** the operating range of the MR60BHA1 respiration sensor in the physical CVSMS prototype.
+
+## 2. Our MATLAB processing sequence
 
 ```mermaid
 flowchart LR
-P[Define fc, bandwidth, chirp timing] --> T[Generate Tx chirp]
-T --> R[Generate delayed Rx signal]
-R --> I[Compute IF waveform]
-I --> F[FFT and range axis]
-F --> V[Waveforms, FFT and spectrogram]
+    P[Radar parameters] --> TX[Generate Tx chirp]
+    TX --> RX[Delay and model Rx]
+    RX --> IF[Form IF signal]
+    IF --> FFT[FFT and frequency axis]
+    FFT --> Plot[Plots and spectrogram]
 ```
 
-The original appendix calculates the bandwidth from range resolution, defines a chirp slope, creates transmit and receive waveforms, derives an IF waveform and plots multiple figures. Its plotted outputs are: **Tx**, **Rx**, **Tx frequency versus time**, **chirp frequency versus time**, **IF waveform**, **IF FFT**, and **spectrogram**.
+### Transmitted and received signals
 
-## Parameter example
+The appendix builds the transmit phase using $f_ct+St^2/2$, applies a time-varying round-trip delay to model the target reflection, and generates the received waveform. It then forms an IF expression by comparing the two chirps.
 
-| Parameter | Appendix value | Meaning |
-|---|---:|---|
-| Carrier frequency | 60 GHz | RF center frequency |
-| Nominal range resolution | 1 m | Target resolution assumption |
-| Maximum simulated range | 200 m | MATLAB scenario, **not radar module sensing limit** |
-| Number of chirps | 128 | Simulation configuration |
-| Samples per chirp | 1,024 | Range sampling configuration |
-| Initial target range | 100 m | Synthetic target |
-| Initial target speed | 70 m/s | Synthetic moving-target input |
+### FFT and visualization
 
-## How to run
-1. Open MATLAB.
-2. Set the Current Folder to `matlab/`.
-3. Run `fmcw_corrected_demo` to produce the **independent synthetic range-FFT example**.
-4. Inspect `matlab/figures/synthetic_range_fft.png` if generated.
-5. Review `fmcw_original_from_capstone.m` for the archived algorithm. Its execution and scientific correctness have **not** been verified here.
+Our script computes an FFT from the IF signal, constructs a frequency axis and converts frequency to range using the chirp slope. It also plots a spectrogram and several time- and frequency-domain figures. The original variable named `doppler` holds a magnitude spectrum here; the script is **not** a full multi-chirp range–Doppler processor.
 
-## Important technical limitations
-- The appendix mixes very high carrier frequencies with finite sampling, so discrete-time aliasing and numerical interpretation require care.
-- The variable named `doppler` in the original is an FFT of a short IF segment; that operation alone is **not** a validated Doppler velocity-processing chain.
-- The range-axis and FFT indexing in the archival script should be reviewed before quantitative conclusions.
-- The independent demonstration uses a **complex-baseband** beat signal to avoid simulating a directly sampled 60 GHz RF carrier.
-- Neither MATLAB script reproduces the module's internal heart-rate extraction or the study's human-subject measurements.
+## 3. MATLAB source code
 
-[Continue to hardware firmware →](07-firmware.md)
+**[Original capstone Appendix Z script](../matlab/fmcw_original_from_capstone.m)**
 
+This file preserves the algorithm and parameter settings as transcribed from our capstone manuscript, with normalized formatting. It is an archival record of the original proof-of-concept code rather than a newly engineered radar signal-processing pipeline.
 
-## Original project figures
+**[Supplementary range-FFT demonstration](../matlab/fmcw_corrected_demo.m)**
 
-These images were supplied from the capstone materials and are presented as project documentation, not independently reproduced measurements.
+A separate synthetic, complex-baseband example illustrates range peak estimation without directly sampling the 60 GHz carrier. I keep it separate so that it cannot be mistaken for our original experimental implementation or measured radar data.
 
-### MATLAB transmit signal (capstone Fig. 5.2.1.1)
+## 4. Figures from our capstone analysis
 
-![MATLAB transmit signal (capstone Fig. 5.2.1.1)](../assets/project-images/04-matlab-simulation/transmitted-signal.png)
+### Transmitted waveform — Figure 5.2.1.1
 
-### Intermediate-frequency waveform (capstone Fig. 5.2.1.3)
+![Original transmitted signal figure](../assets/project-images/04-matlab-simulation/transmitted-signal.png)
 
-![Intermediate-frequency waveform (capstone Fig. 5.2.1.3)](../assets/project-images/04-matlab-simulation/if-signal.png)
+*The transmitted waveform generated in our MATLAB study.*
 
-### FFT of IF signal (capstone Fig. 5.2.1.4)
+### IF signal — Figure 5.2.1.3
 
-![FFT of IF signal (capstone Fig. 5.2.1.4)](../assets/project-images/04-matlab-simulation/range-fft.png)
+![Original IF waveform](../assets/project-images/04-matlab-simulation/if-signal.png)
 
-### MATLAB spectrogram; supplied visualization
+*The intermediate-frequency representation obtained by comparing transmitted and delayed received waveforms.*
 
-![MATLAB spectrogram; supplied visualization](../assets/project-images/04-matlab-simulation/spectrogram.png)
+### IF signal spectrum — Figure 5.2.1.4
 
+![Original IF signal FFT](../assets/project-images/04-matlab-simulation/range-fft.png)
+
+*The spectral peak illustrates the relationship between beat frequency and the assumed target position.*
+
+### Spectrogram
+
+![Spectrogram from project material](../assets/project-images/04-matlab-simulation/spectrogram.png)
+
+*A time–frequency visualization of the simulated signal.*
+
+## 5. Running the scripts
+
+In MATLAB, change the Current Folder to `matlab/`, then run:
+
+```matlab
+% Original appendix code, retained for archival study
+fmcw_original_from_capstone
+
+% Independent synthetic range FFT demonstration
+fmcw_corrected_demo
+```
+
+The original uses MATLAB's `spectrogram` functionality, typically supplied by Signal Processing Toolbox. The appendix's high carrier-frequency waveform generation and sampling assumptions are not equivalent to a physically sampled RF acquisition chain; use the supplementary complex-baseband example for a clearer single-target range FFT demonstration.
+
+The original and supplementary MATLAB scripts have not been independently executed in a licensed MATLAB installation for this release, so I do not present their numerical output as externally revalidated results.
+
+[Next: ESP8266 source code →](07-firmware.md)

@@ -1,6 +1,6 @@
-% Modernized independent simulation based on the capstone FMCW parameters.
-% Demonstrates range estimation with a complex-baseband dechirped signal.
-% This is not the original experimental radar processing pipeline.
+% Separate synthetic FMCW range-FFT illustration based on our capstone parameters.
+% Uses complex baseband sampling to demonstrate a stationary target.
+% This is not experimental radar data or the MR60BHA1 internal signal processor.
 clear; close all; clc;
 c=3e8; fc=60e9; maxR=200; rangeRes=1; targetRange=100;
 B=c/(2*rangeRes); Tchirp=5.5*2*maxR/c; slope=B/Tchirp;
@@ -19,5 +19,6 @@ fprintf('True range: %.2f m | Estimated range: %.2f m\n',targetRange,estimatedRa
 figure('Color','w'); plot(ranges,spectrum(1:numel(freq)),'LineWidth',1.5);
 xlabel('Range (m)'); ylabel('FFT magnitude'); title('Synthetic FMCW range FFT'); grid on;
 xlim([0 maxR]);
-if ~exist('figures','dir'), mkdir('figures'); end
-saveas(gcf,fullfile('figures','synthetic_range_fft.png'));
+outputDir = fullfile(fileparts(mfilename('fullpath')), 'figures');
+if ~exist(outputDir, 'dir'), mkdir(outputDir); end
+saveas(gcf, fullfile(outputDir, 'synthetic_range_fft.png'));

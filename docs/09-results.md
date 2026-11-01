@@ -1,58 +1,74 @@
-# 09 · Experimental evaluation, findings and limitations
+# 09 — Experimental results and engineering assessment
 
-[← Home](../README.md) · [← IoT](08-iot-android.md) · [Reproduce →](10-reproduction.md)
+[← Home](../README.md) · [← Android app](08-iot-android.md) · [Next: Reproduction →](10-reproduction.md)
 
-## What the capstone evaluated
-The book's **Results Analysis & Critical Design Review** chapter discusses radar-derived heart-rate and respiratory-rate readings, a thermal-sensor readout, comparison with reference instruments, and cloud/application communication.
+After integrating the radar, display and cloud monitoring stages, we evaluated the prototype by comparing its reported measurements with reference readings. Our capstone presented separate heart-rate and respiratory-rate comparisons for younger and older participants.
 
-## Reported summary metrics
-The project materials report **18 participants** and **90 samples**. The following previously documented values correspond to **100 − MAPE (%)**:
+## Our measurement setup
 
-| Age group | Heart rate | Respiratory rate |
+According to Chapter 5 of our capstone report, **18 volunteers contributed 90 recorded samples**, with five readings per participant. The younger group contained **10 participants (50 measurements)** aged **22–25**, while the older group contributed **8 participants (40 measurements)** aged **45–79**.
+
+For heart-rate comparison, the book identifies a **Jumper JPD-500D pulse oximeter** as a reference device. The respiratory-rate assessment included manual counting and other instrumentation discussed in the report, including a **24 GHz radar** and **ADS1292R ECG/respiration module**. The references and testing conditions should be considered when interpreting the results; they were not the same as conducting a clinical validation trial.
+
+The project also describes testing under different conditions, such as sitting, rest and after activity. Small radar-measured chest movements are sensitive to target alignment and larger body motion.
+
+## Our reported comparison scores
+
+| Participant group | Heart rate | Respiratory rate |
 |---|---:|---:|
-| 22–25 years | 92.11% | 89.88% |
-| 45–79 years | 96.05% | 93.73% |
+| **Ages 22–25** | **92.11%** | **89.88%** |
+| **Ages 45–79** | **96.05%** | **93.73%** |
 
-Mean absolute percentage error (MAPE) is generally
+We reported these values as a score calculated from **mean absolute percentage error (MAPE)**:
 
-```math
-\mathrm{MAPE}(\%)=\frac{100}{N}\sum_{i=1}^{N}\left|\frac{y_i-\hat y_i}{y_i}\right|.
-```
+$$ \operatorname{MAPE}(\%)=\frac{100}{N}\sum_{i=1}^{N}\left|\frac{y_i-\hat{y}_i}{y_i}\right|, $$
 
-A **100 − MAPE** score is a convenient presentation metric, but it is **not** clinical diagnostic accuracy, nor does it quantify sensitivity, specificity, or agreement limits.
+$$ \text{Reported score}=100\%-\operatorname{MAPE}(\%). $$
 
-## MATLAB results versus prototype results
-**MATLAB:** Demonstrates transmitted and received chirps, IF signal, FFT and spectrogram using synthetic radar parameters. **Hardware:** Uses an MR60BHA1 module's internally processed vital-sign reports, ESP8266 readout, LCD and cloud integration. Do not combine their plots into a single experimentally validated signal chain.
+Here $y_i$ is the reference reading and $\hat y_i$ is the radar reading. A high score represents a lower average percentage error in our reported comparisons. It should **not** be interpreted as clinical accuracy, diagnostic sensitivity or specificity. These scores also do not give confidence intervals, agreement limits or an independent measure of robustness.
 
-## Limitations and future work
-- Small reported study and no participant-level raw data in this repository.
-- Position, distance, motion and sensor alignment may influence radar reports.
-- The thermal-sensor thermistor is not a validated core-temperature measurement.
-- Unclear full calibration, confidence intervals and reproducible subject-level protocol.
-- No independent medical-device certification or clinical validation.
-- Cloud outages and power quality affect availability.
+## Heart-rate evaluation
 
-## Future improvements
-Document exact reference devices and protocol; publish appropriately anonymized aggregate measurements if authorized; characterize movement artefacts and sensor placement; compare Bland–Altman limits of agreement; redesign serial-port handling and electrical protection; add secure cloud transport.
+### Younger volunteers
 
+![Heart-rate comparison for 22–25 age group](../assets/project-images/06-experiments-and-results/heart-rate-young.png)
 
-## Original project figures
+*Heart-rate comparison chart from the younger group, showing reference and radar readings.*
 
-These images were supplied from the capstone materials and are presented as project documentation, not independently reproduced measurements.
+### Older volunteers
 
-### Heart-rate comparison: younger group
+![Heart-rate comparison for 45–79 age group](../assets/project-images/06-experiments-and-results/heart-rate-older.png)
 
-![Heart-rate comparison: younger group](../assets/project-images/06-experiments-and-results/heart-rate-young.png)
+*Heart-rate comparison chart for the older participants.*
 
-### Respiratory-rate comparison: younger group
+## Respiratory-rate evaluation
 
-![Respiratory-rate comparison: younger group](../assets/project-images/06-experiments-and-results/respiration-young.png)
+### Younger volunteers
 
-### Heart-rate comparison: older group
+![Respiratory comparison for 22–25 age group](../assets/project-images/06-experiments-and-results/respiration-young.png)
 
-![Heart-rate comparison: older group](../assets/project-images/06-experiments-and-results/heart-rate-older.png)
+*Respiratory-rate comparison from the younger group.*
 
-### Respiratory-rate comparison: older group
+### Older volunteers
 
-![Respiratory-rate comparison: older group](../assets/project-images/06-experiments-and-results/respiration-older.png)
+![Respiratory comparison for 45–79 age group](../assets/project-images/06-experiments-and-results/respiration-older.png)
 
+*Respiratory-rate comparison for the older participants.*
+
+## What I take from these findings
+
+The comparison figures demonstrated the potential of using a compact radar module for non-contact measurement in our controlled academic setup. Just as importantly, they showed why **measurement conditions, participant movement, sensor positioning and choice of reference instrument** matter.
+
+Our MATLAB plots and experimental graphs answer **different questions**. MATLAB illustrates how an FMCW chirp and IF signal behave in simulation. The experimental graphs compare the physical device's built-in radar readings with reference measurements. One should not be used as evidence for the other's measured performance.
+
+## Boundaries of our study
+
+- The public archive contains the comparison figures and reported aggregate findings, **not** the raw participant-level data.
+- The sample size was modest, and the study was not designed to establish clinical diagnostic performance.
+- We did not establish validated multi-person monitoring, body-motion compensation, or continuous clinical monitoring.
+- The firmware's AMG88xx thermistor reading is not evidence of validated core-body temperature measurement.
+- A medical deployment would need a controlled protocol, repeatability testing, agreement analysis, data security, and regulatory review.
+
+These limitations guided how I would extend the research, discussed in [Future work](14-limitations-and-next-steps.md).
+
+[Next: Reproduction and setup →](10-reproduction.md)

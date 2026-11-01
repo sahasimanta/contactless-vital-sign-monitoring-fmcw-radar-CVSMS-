@@ -5,3 +5,12 @@ __pycache__/
 .DS_Store
 firmware/esp8266/secrets.h
 **/secrets.h
+
+firmware/esp8266/CVSMS_ESP8266/secrets.h
+
+# Local simulation output (not the original capstone figures)
+matlab/figures/
+# OS/editor files
+Thumbs.db
+.vscode/
+.idea/

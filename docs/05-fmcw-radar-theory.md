@@ -1,45 +1,64 @@
-# 05 · FMCW radar and contactless vital-sign theory
+# 05 — Understanding the 60 GHz FMCW radar principle
 
-[← Home](../README.md) · [← Circuit](04-circuit-and-wiring.md) · [MATLAB →](06-matlab-analysis.md)
+[← Home](../README.md) · [← Circuit](04-circuit-and-wiring.md) · [Next: MATLAB →](06-matlab-analysis.md)
 
-## 1. Frequency-modulated chirp
-An ideal linear FMCW chirp sweeps its frequency from a starting carrier at slope \(S=B/T_c\), where \(B\) is bandwidth and \(T_c\) is chirp duration:
+FMCW radar was one of the most interesting parts of our capstone for me. It connects electromagnetic-wave propagation with signal processing, and it provides a way to observe very small movements without making physical contact with the target.
 
-\[ f_{Tx}(t)=f_c+St \]
+## 1. Transmitting a chirp
 
-The corresponding transmitted waveform is
+An FMCW radar transmits a waveform whose instantaneous frequency changes during a sweep (chirp). For an ideal linear sweep,
 
-\[ s_{Tx}(t)=\cos\left(2\pi\left[f_ct+\frac{S}{2}t^2\right]\right). \]
+$$ f_{\mathrm{Tx}}(t)=f_c+St,\qquad S=\frac{B}{T_c} $$
 
-## 2. Reflection and delay
-For a stationary target at range \(R\), the round-trip propagation delay is approximately
+where $f_c$ is the carrier frequency, $S$ is the chirp slope, $B$ is the chirp bandwidth, and $T_c$ is the chirp duration. One mathematical representation of the transmitted signal is
 
-\[ \tau=\frac{2R}{c}. \]
+$$ s_{\mathrm{Tx}}(t)=\cos\left[2\pi\left(f_ct+\frac{St^2}{2}\right)\right]. $$
 
-A simplified delayed return is \(s_{Rx}(t)=A\,s_{Tx}(t-\tau)\). Mixing transmit and receive signals yields a **beat frequency** approximately
+We used a **60 GHz** carrier assumption in our MATLAB proof of concept. Its free-space wavelength is roughly **5 mm**, which helps explain why movement on the scale of a small fraction of a wavelength can affect the phase of a radar return.
 
-\[ f_b=S\tau=\frac{2SR}{c}. \]
+## 2. The reflected signal
 
-Thus the range estimate is
+The transmitted wave reflects from objects within the antenna's field of view. For a stationary target at distance $R$, the ideal round-trip propagation delay is
 
-\[ R=\frac{cf_b}{2S}. \]
+$$ \tau=\frac{2R}{c}, $$
 
-For an ideal chirp, nominal range resolution is \(\Delta R=c/(2B)\).
+where $c$ is the speed of light. A simplified reflected signal is
 
-## 3. Why breathing and heartbeat affect the radar phase
-Small chest displacement \(x(t)\) changes the round-trip path. The approximate phase change is
+$$ s_{\mathrm{Rx}}(t)=A\cos\left[2\pi\left(f_c(t-\tau)+\frac{S(t-\tau)^2}{2}\right)\right]. $$
 
-\[ \Delta\phi(t)=\frac{4\pi x(t)}{\lambda},\quad \lambda=\frac{c}{f_c}. \]
+The reflected wave arrives later than the transmitted chirp. Motion introduces additional time-varying phase and, depending on the observation interval, Doppler effects.
 
-Respiration generally produces slower, larger displacement, while heartbeat-related motion is faster and smaller. In a research-grade raw-I/Q processing chain, phase unwrapping, clutter suppression, motion-artifact handling, filtering and spectral estimation can be used to separate these components.
+## 3. Mixing and the IF/beat frequency
 
-**Crucial implementation distinction:** Our MR60BHA1 module **already reports heart-rate and respiratory-rate values** over UART. The ESP8266 firmware reads those reports; it does not implement the above phase-unwrapping pipeline. The MATLAB appendix investigates FMCW concepts separately.
+Comparing the transmitted and received chirps produces a lower-frequency intermediate-frequency (IF) or beat component. For the ideal stationary-target case,
 
-## 4. MATLAB proof of concept
-The appendix uses \(f_c=60\,\mathrm{GHz}\), maximum simulated range 200 m, nominal range resolution 1 m, 128 chirps and 1,024 samples per chirp. These parameters demonstrate radar waveforms and FFT operations. The **200 m simulation range must not be interpreted as the MR60BHA1's real-world vital-sign detection range**.
+$$ f_b=S\tau=\frac{2SR}{c},\qquad R=\frac{cf_b}{2S}. $$
 
-## 5. Spectral interpretation
-An FFT of an IF beat signal can identify frequency peaks and map them to range. A spectrogram illustrates frequency content over time. **A range FFT is not automatically a heart-rate/respiration estimator**; vital-sign estimation needs a different slow-time/phase-analysis pipeline or a radar module with built-in estimation.
+The corresponding ideal range resolution is approximately
 
-## 6. Sources and caveats
-Equations are standard ideal FMCW relations, restated for project documentation. Real performance depends on modulation design, sampling, motion, clutter, antenna pattern and calibration. See [MATLAB analysis](06-matlab-analysis.md) and [limitations](09-results.md).
+$$ \Delta R=\frac{c}{2B}. $$
+
+In our MATLAB appendix, we used a nominal **1 m range-resolution parameter** and a **200 m simulated maximum range**. Those are assumptions for the **illustrative simulation**, not claims about the actual MR60BHA1 vital-sign sensor's detection distance.
+
+## 4. Why chest motion matters
+
+Breathing and heartbeat introduce small motion at the chest surface. If $x(t)$ is displacement along the radar line of sight, a simplified monostatic phase-change model is
+
+$$ \Delta\phi(t)=\frac{4\pi x(t)}{\lambda},\qquad\lambda=\frac{c}{f_c}. $$
+
+Breathing usually produces a relatively slow and strong mechanical component, whereas the heartbeat-related displacement is smaller and faster. A radar system with access to sufficiently clean phase data may estimate these different rhythms using filtering, spectral analysis and motion-artifact suppression.
+
+## 5. How the principle relates to our device
+
+Our project has two distinct processing levels:
+
+1. **MATLAB proof of concept:** we generated synthetic chirps, simulated propagation delay, and examined the IF waveform, FFT and spectrogram.
+2. **Embedded prototype:** we used an **MR60BHA1 with built-in vital-sign estimation**. The radar sent rate reports over UART to the ESP8266, which displayed and uploaded the readings.
+
+We did **not** implement a raw radar phase-extraction algorithm on the ESP8266, and we did not validate our MATLAB script as a replacement for the radar module's internal processing. This distinction is central to understanding our architecture.
+
+## 6. What the FFT shows—and what it does not
+
+An FFT transforms the sampled time-domain IF waveform into frequency-domain components. A peak in a beat spectrum can be associated with range through the chirp slope under the ideal assumptions. By itself, that is **not** the same calculation as deriving heart rate or respiratory rate from a sequence of slow-time chest displacements.
+
+[Next: Our MATLAB model and plots →](06-matlab-analysis.md)
